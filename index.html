@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
     <title>Twelve Data Time Series API Example</title>
 </head>
 <body onload=fetchTimeSeriesAndCreateVAP()>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volume at Price (VAP) Chart</title>
 <!--     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -27,6 +26,7 @@
 
     <canvas id="vapChart" width="400" height="100"></canvas>
     <canvas id="ohlcChart" width="400" height="100"></canvas>
+    <p id="debug" style="display:none">debug area</p>
 
     <script>
 
@@ -49,6 +49,8 @@
                 const response = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1min&apikey=${apiKey}`);
                 const data = await response.json();
                 console.log(data)
+                document.getElementById('debug').innerHTML = JSON.stringify(data)
+
                 if (data.status === 'ok') {
                     const priceLevels = data.values.map(item => item.close); // Use closing prices as price levels
                     suggestedMin = Math.min(priceLevels) - 1
@@ -88,6 +90,7 @@
                                         weight: 'bold', // Font weight
                                     },
                                 },
+                                order:1,
 
                             }, 
                             {
@@ -103,6 +106,8 @@
                                 fill: false,
                                 yAxisID: 'priceaxis',
                                 xAxisID: 'xprice',
+                                order:0,
+
                             },
                             // { 
                             //    label: 'Open High Low Close',
@@ -256,15 +261,20 @@
                     });
 
                     previousOhlcChart = combinedChart2
+                    document.getElementById('debug').innerHTML = JSON.stringify(previousOhlcChart.data.datasets[1])
 
                 } 
+
                 else {
                     alert('Symbol not found or API request failed.');
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
+                document.getElementById('debug').innerHTML = 'Error fetching data:' + error
+
             }
         }
+
     </script>
 
 
