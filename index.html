@@ -10,32 +10,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volume at Price (VAP) Chart</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+<!--     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.1/dist/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+    <script src="./chartjs-chart-financial.js" type="text/javascript"></script>
  
-    <h1>Volume at Price (VAP) Chart</h1>
+    <h3>Volume at Price (VAP) Chart - AAPL works with demo key
     <input type="text" id="symbolInput" value="AAPL">
-    <button onclick="fetchTimeSeriesAndCreateVAP()">Get VAP Chart</button>
+    <input type="text" id="keyInput" value="demo">
+    <button onclick="fetchTimeSeriesAndCreateVAP()">Get Chart Data</button></h3>
 
-    <canvas id="vapChart" width="400" height="200"></canvas>
+    <canvas id="vapChart" width="400" height="100"></canvas>
+    <canvas id="ohlcChart" width="400" height="100"></canvas>
 
     <script>
-// Configure Luxon as the date adapter for Chart.js
-// Chart.defaults.plugins.tooltip.callbacks.label = function (context) {
-//   var value = context.parsed.y;
-//   if (typeof value === 'number') {
-//     value = value.toFixed(2);
-//   }
-//   return value;
-// };
+
         // Get the canvas element
-        const canvas = document.getElementById('vapChart');
-        let previousChart = null; // To keep track of the previous chart
+        const vapCanvas = document.getElementById('vapChart');
+        const ohlcCanvas = document.getElementById('ohlcChart');
+        let previousVapChart = null; // To keep track of the previous chart
+        let previousOhlcChart = null; // To keep track of the previous chart
+                
+        const customFormat = "yyyy-MM-dd HH:mm:ss";
 
         async function fetchTimeSeriesAndCreateVAP() {
             const symbol = document.getElementById('symbolInput').value;
-            const apiKey = 'demo'; // Replace with your API key
+            const apiKey = document.getElementById('keyInput').value; // Replace with your API key
 
             try {
 
@@ -49,100 +54,211 @@
                     suggestedMin = Math.min(priceLevels) - 1
                     suggestedMax = Math.max(priceLevels) + 1
 
-                if (previousChart) {
-                    previousChart.destroy();
-                }
+                    if (previousVapChart) {
+                        previousVapChart.destroy();
+                    }
 
-                // Create a combined chart with VAP bars and Price Over Time
-                const combinedChart = new Chart(canvas, {
-                    data: {
-                        //labels: priceLevelsFloat.map(level => `$${level.toFixed(2)}`),
-                        datasets: [
-                        {
-                            label: 'Volume at Price',
-                            data: data.values.map(item => ({
-                                x: item.volume, 
-                                y: item.close,
-                            })),            
-                            backgroundColor: 'rgba(75, 192, 192, 0.3)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            indexAxis: 'y', // Set index axis to 'y'
-                            yAxisID: 'priceaxis',
-                            xAxisID: 'xvap',
-                            type: 'bar',
-                            barThickness: 5, // Adjust the bar width as needed
-                            // Configure data labels for the bar dataset
-                            datalabels: {
-                                display: true, // Enable data labels
-                                anchor: 'end', // Position of the labels
-                                align: 'top', // Alignment of the labels
-                                color: 'black', // Label text color
-                                font: {
-                                    weight: 'bold', // Font weight
+                    // Create a combined chart with VAP bars and Price Over Time
+                    const combinedChart1 = new Chart(vapCanvas, {
+                        //type: 'candlestick',
+                        data: {
+                            //labels: priceLevelsFloat.map(level => `$${level.toFixed(2)}`),
+                            datasets: [
+                            {
+                                label: 'Volume at Price',
+                                type: 'bar',
+                                data: data.values.map(item => ({
+                                    x: item.volume, 
+                                    y: item.close,
+                                })),            
+                                backgroundColor: 'rgba(75, 192, 192, 0.3)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1,
+                                indexAxis: 'y', // Set index axis to 'y'
+                                yAxisID: 'priceaxis',
+                                xAxisID: 'xvap',
+                                barThickness: 5, // Adjust the bar width as needed
+                                // Configure data labels for the bar dataset
+                                datalabels: {
+                                    display: true, // Enable data labels
+                                    anchor: 'end', // Position of the labels
+                                    align: 'top', // Alignment of the labels
+                                    color: 'black', // Label text color
+                                    font: {
+                                        weight: 'bold', // Font weight
+                                    },
                                 },
-                            },
 
-                        }, 
-                        {
-                            label: 'Price Over Time',
-                            data: data.values.reverse().map(item => ({
-                                //x: new Date(item.datetime), // Assign datetime to x-axis
-                                x: item.datetime, // Assign datetime to x-axis
-                                y: item.close,
-                            })),            
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            fill: false,
-                            yAxisID: 'priceaxis',
-                            xAxisID: 'xprice',
-                            //indexAxis: 'y',
-                            type: 'line',
-                        }
-                        ],
-                    },
-                    options: {
-                        scales: {
-                            xvap: {
-                                beginAtZero: false,
-                                position: 'top',
-                                grid: {
-                                    display: false,
-                                },                           
-                            },            
-                            xprice: {
-                                beginAtZero: false,
-                                grid: {
-                                    color: 'rgba(20, 20, 20, 0.4)', // Customize grid line color for the y-axis
-                                },
-                                position: 'bottom', // Display on the bottom
+                            }, 
+                            {
+                                label: 'Price Over Time',
+                                type: 'line',
+                                data: data.values.reverse().map(item => ({
+                                    //x: new Date(item.datetime), // Assign datetime to x-axis
+                                    x: luxon.DateTime.fromFormat(item.datetime, customFormat), // Assign datetime to x-axis
+                                    y: item.close,
+                                })),            
+                                borderColor: 'rgba(0, 0, 0, 1)',
+                                borderWidth: 2,
+                                fill: false,
+                                yAxisID: 'priceaxis',
+                                xAxisID: 'xprice',
                             },
-                            // vapaxis: {
-                            //     type: 'linear',
-                            //     position: 'right',
-                            //     beginAtZero: false,
-                            //     min: suggestedMin,
-                            //     max: suggestedMax,
-                            //     grid: {
-                            //         color: 'rgba(0, 255, 0, 0.7)', // Customize grid line color for the y-axis
-                            //     },                            },
-                            priceaxis: {
-                                type: 'linear',
-                                position: 'left',
-                                beginAtZero: false,
-                                min: suggestedMin,
-                                max: suggestedMax,
-                                grid: {
-                                    display: false,
-    
+                            // { 
+                            //    label: 'Open High Low Close',
+                            //    // type: 'candlestick',
+                            //    yAxisID: 'priceaxis',
+                            //    xAxisID: 'xprice',
+                            //    borderWidth: 2,
+                            //    data: data.values.map(item => { return {
+                            //         x: luxon.DateTime.fromFormat(item.datetime, customFormat).valueOf(), 
+                            //         o: Number(item.open), 
+                            //         h: Number(item.high),
+                            //         l: Number(item.low),
+                            //         c: Number(item.close)
+                            //     }
+                            //     }),
+                            // },
+                            ],
+                        },
+                        options: {
+                            scales: {
+                                xvap: {
+                                    beginAtZero: false,
+                                    position: 'top',
+                                    grid: {
+                                        display: false,
+                                    },                           
+                                },            
+                                xprice: {
+                                    type: "time",
+                                    beginAtZero: false,
+                                    grid: {
+                                        color: 'rgba(20, 20, 20, 0.4)', // Customize grid line color for the y-axis
+                                    },
+                                    position: 'bottom', // Display on the bottom
+                                },
+                                priceaxis: {
+                                    type: 'linear',
+                                    position: 'left',
+                                    beginAtZero: false,
+                                    min: suggestedMin,
+                                    max: suggestedMax,
+                                    grid: {
+                                        display: false,
+        
+                                    },
                                 },
                             },
                         },
-                    },
-                });
+                    });
 
-                previousChart = combinedChart
+                    previousVapChart = combinedChart1
 
-                } else {
+
+                    if (previousOhlcChart) {
+                        previousOhlcChart.destroy();
+                    }
+
+                    // Create a combined chart with VAP bars and Price Over Time
+                    const combinedChart2 = new Chart(ohlcCanvas, {
+                        type: 'candlestick',
+                        data: {
+                            //labels: priceLevelsFloat.map(level => `$${level.toFixed(2)}`),
+                            datasets: [
+                            // {
+                            //     label: 'Volume at Price',
+                            //     type: 'bar',
+                            //     data: data.values.map(item => ({
+                            //         x: item.volume, 
+                            //         y: item.close,
+                            //     })),            
+                            //     backgroundColor: 'rgba(75, 192, 192, 0.3)',
+                            //     borderColor: 'rgba(75, 192, 192, 1)',
+                            //     borderWidth: 1,
+                            //     indexAxis: 'y', // Set index axis to 'y'
+                            //     yAxisID: 'priceaxis',
+                            //     xAxisID: 'xvap',
+                            //     barThickness: 5, // Adjust the bar width as needed
+                            //     // Configure data labels for the bar dataset
+                            //     datalabels: {
+                            //         display: true, // Enable data labels
+                            //         anchor: 'end', // Position of the labels
+                            //         align: 'top', // Alignment of the labels
+                            //         color: 'black', // Label text color
+                            //         font: {
+                            //             weight: 'bold', // Font weight
+                            //         },
+                            //     },
+
+                            // }, 
+                            {
+                                label: 'Price Over Time',
+                                type: 'line',
+                                data: data.values.reverse().map(item => ({
+                                    //x: new Date(item.datetime), // Assign datetime to x-axis
+                                    x: luxon.DateTime.fromFormat(item.datetime, customFormat), // Assign datetime to x-axis
+                                    y: item.close,
+                                })),            
+                                borderColor: 'rgba(0, 0, 0, 1)',
+                                borderWidth: 2,
+                                fill: false,
+                                yAxisID: 'priceaxis',
+                                xAxisID: 'xprice',
+                            },
+                            { 
+                               label: 'Open High Low Close',
+                               // type: 'candlestick',
+                               yAxisID: 'priceaxis',
+                               xAxisID: 'xprice',
+                               borderWidth: 2,
+                               data: data.values.map(item => { return {
+                                    x: luxon.DateTime.fromFormat(item.datetime, customFormat).valueOf(), 
+                                    o: Number(item.open), 
+                                    h: Number(item.high),
+                                    l: Number(item.low),
+                                    c: Number(item.close)
+                                }
+                                }),
+                            },
+                            ],
+                        },
+                        options: {
+                            scales: {
+                                xvap: {
+                                    beginAtZero: false,
+                                    position: 'top',
+                                    grid: {
+                                        display: false,
+                                    },                           
+                                },            
+                                xprice: {
+                                    type: "time",
+                                    beginAtZero: false,
+                                    grid: {
+                                        color: 'rgba(20, 20, 20, 0.4)', // Customize grid line color for the y-axis
+                                    },
+                                    position: 'bottom', // Display on the bottom
+                                },
+                                priceaxis: {
+                                    type: 'linear',
+                                    position: 'left',
+                                    beginAtZero: false,
+                                    min: suggestedMin,
+                                    max: suggestedMax,
+                                    grid: {
+                                        display: false,
+        
+                                    },
+                                },
+                            },
+                        },
+                    });
+
+                    previousOhlcChart = combinedChart2
+
+                } 
+                else {
                     alert('Symbol not found or API request failed.');
                 }
             } catch (error) {
