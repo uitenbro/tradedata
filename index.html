@@ -22,6 +22,9 @@
     <h3>Volume at Price (VAP) Chart - AAPL works with demo key
     <input type="text" id="symbolInput" value="AAPL">
     <input type="text" id="keyInput" value="demo">
+    <input type="text" id="intervalInput" value="1min">
+    <input type="text" id="samplesInput" value="60">
+    <input id="endInput" type="datetime-local"/>
     <button onclick="fetchTimeSeriesAndCreateVAP()">Get Chart Data</button></h3>
 
     <canvas id="vapChart" width="400" height="100"></canvas>
@@ -29,24 +32,32 @@
     <p id="debug" style="display:none">debug area</p>
 
     <script>
-
+        const now = new Date
+        document.getElementById('endInput').value = now.toISOString().replace('Z', '')
         // Get the canvas element
         const vapCanvas = document.getElementById('vapChart');
         const ohlcCanvas = document.getElementById('ohlcChart');
         let previousVapChart = null; // To keep track of the previous chart
         let previousOhlcChart = null; // To keep track of the previous chart
                 
-        const customFormat = "yyyy-MM-dd HH:mm:ss";
-
         async function fetchTimeSeriesAndCreateVAP() {
             const symbol = document.getElementById('symbolInput').value;
             const apiKey = document.getElementById('keyInput').value; // Replace with your API key
+            const interval = document.getElementById('intervalInput').value; 
+            const samples = document.getElementById('samplesInput').value; 
+            const end = document.getElementById('endInput').value.replace('T', ' '); console.log(end)
 
+            if (interval.includes('day') || interval.includes('week') || interval.includes('month')) {
+                customFormat = "yyyy-MM-dd";
+            }
+            else {
+                customFormat = "yyyy-MM-dd HH:mm:ss";
+            }
             try {
 
 
                 // Fetch historical time series data - https://twelvedata.com/docs#core-data
-                const response = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1min&outputsize=60&apikey=${apiKey}`);
+                const response = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&end_date=${end}&outputsize=${samples}&apikey=${apiKey}`);
                 const data = await response.json();
                 console.log(data)
                 document.getElementById('debug').innerHTML = JSON.stringify(data)
@@ -267,6 +278,8 @@
 
                 else {
                     alert('Symbol not found or API request failed.');
+                    document.getElementById('debug').style.display = "block"
+                    document.getElementById('debug').innerHTML = 'Error fetching data:' + JSON.stringify(data)
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
