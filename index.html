@@ -45,8 +45,8 @@
             try {
 
 
-                // Fetch historical time series data
-                const response = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1min&apikey=${apiKey}`);
+                // Fetch historical time series data - https://twelvedata.com/docs#core-data
+                const response = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1min&outputsize=60&apikey=${apiKey}`);
                 const data = await response.json();
                 console.log(data)
                 document.getElementById('debug').innerHTML = JSON.stringify(data)
